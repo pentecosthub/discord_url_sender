@@ -10,7 +10,7 @@ This is an Obsidian plugin that clips web pages you post in a Discord channel an
 
 - Automatically clips the web page at any URL posted in the channel and saves it as Markdown — no command prefix needed
 - Silently ignores any message that doesn't contain a URL; nothing is saved and no notice is shown
-- Syncs multiple Discord channels and stores each channel in its own subfolder
+- Syncs multiple Discord channels into a single shared clippings folder
 - Lets you disable or customize the Discord notification messages sent after sync
 - Can be triggered on Obsidian desktop startup or via the command palette
 
@@ -66,17 +66,17 @@ This is an Obsidian plugin that clips web pages you post in a Discord channel an
 Please enter the following information in the plugin settings:
 
 - **Bot Token**
-- **Channels**: Add each Discord channel ID. A channel name is optional and is used as the Obsidian subfolder name. Channel names must resolve to unique folder names.
+- **Channels**: Add each Discord channel ID. A channel name is optional and only appears in Discord sync notifications (`{channelName}`); it does not affect where clippings are saved. Channel names must be unique among your configured channels.
 - **Send sync notifications**: Disable this to prevent the plugin from posting completion messages to Discord.
 - **Notification templates**: Optional templates for the Discord messages sent after sync. Available variables: `{count}`, `{channelName}`, `{channelId}`
 
-By default, clippings are saved under `DiscordClippings/<channel name or ID>/`. Duplicate folder names are rejected in settings, and sync also stops if manually edited settings contain a duplicate.
+By default, clippings from every synced channel are saved together under `DiscordClippings/`, with no per-channel subfolder.
 
 Channel names cannot contain `\ / : * ? " < > | # ^ [ ]`. The names `.` and `..` are also not allowed. Invalid names are not saved.
 
 ## URL Clipping
 
-Every synced message is scanned for a URL (anything starting with `http://` or `https://`). If one is found, the linked page is fetched and saved as an individual Markdown file: `DiscordClippings/<channel name or ID>/YYYYMMDD_HHMMSS_<message ID>.md`, using the computer's local time zone when synchronization starts. If a message has no URL, it is skipped entirely — nothing is written and no notice is shown.
+Every synced message is scanned for a URL (anything starting with `http://` or `https://`). If one is found, the linked page is fetched and saved as an individual Markdown file: `DiscordClippings/YYYYMMDD_HHMMSS_<message ID>.md`, using the computer's local time zone when synchronization starts. If a message has no URL, it is skipped entirely — nothing is written and no notice is shown.
 
 ### Discord API behavior
 
