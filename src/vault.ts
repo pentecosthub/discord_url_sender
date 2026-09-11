@@ -1,6 +1,5 @@
 import type { Vault } from "obsidian";
 import {
-  individual_message_id,
   plan_message_storage,
   type ProcessedMessage,
   type StorageInput,
@@ -18,9 +17,6 @@ export async function saveProcessedMessages(
   const input: StorageInput = {
     clippingDirectory,
     messages: [...messages],
-    existingIds: [
-      ...getExistingIndividualMessageIds(vault, clippingDirectory),
-    ],
   };
   const plan = plan_message_storage(input);
 
@@ -40,20 +36,6 @@ export async function saveProcessedMessages(
     savedCount++;
   }
   return savedCount;
-}
-
-export function getExistingIndividualMessageIds(
-  vault: Vault,
-  directory: string,
-): ReadonlySet<string> {
-  const ids = new Set<string>();
-  const folder = vault.getFolderByPath(directory);
-  for (const child of folder?.children ?? []) {
-    const file = vault.getFileByPath(child.path);
-    const id = file ? individual_message_id(file.name) : undefined;
-    if (id) ids.add(id);
-  }
-  return ids;
 }
 
 async function ensureDir(vault: Vault, path: string): Promise<void> {

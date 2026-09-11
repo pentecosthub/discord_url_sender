@@ -44,6 +44,7 @@ describe("Rust/TypeScript boundary", () => {
     expect(() =>
       processed_message(
         "hello",
+        undefined,
         { id: 123 } as unknown as DiscordMessage,
         "UTC",
       ),
@@ -59,7 +60,7 @@ describe("Rust/TypeScript boundary", () => {
     } as unknown as DiscordMessage;
     const fail = () => {
       try {
-        processed_message("hello", invalid, "UTC");
+        processed_message("hello", undefined, invalid, "UTC");
       } catch {
         return;
       }

@@ -110,20 +110,19 @@ pub fn message_url(input: &str) -> Option<String> {
 #[wasm_bindgen]
 pub fn processed_message(
     markdown: String,
+    title: Option<String>,
     message: Ts<DiscordMessage>,
     zone: &str,
 ) -> Result<Ts<ProcessedMessage>, JsError> {
-    Ok(messages::processed(markdown, message.to_rust()?, zone)
-        .map_err(error)?
-        .into_ts()?)
+    Ok(
+        messages::processed(markdown, title.as_deref(), message.to_rust()?, zone)
+            .map_err(error)?
+            .into_ts()?,
+    )
 }
 #[wasm_bindgen]
 pub fn should_process_message(message: Ts<DiscordMessage>) -> Result<bool, JsError> {
     Ok(sync::should_process(&message.to_rust()?))
-}
-#[wasm_bindgen]
-pub fn individual_message_id(name: &str) -> Option<String> {
-    storage::individual_id(name)
 }
 #[wasm_bindgen]
 pub fn plan_message_storage(

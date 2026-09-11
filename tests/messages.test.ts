@@ -33,14 +33,53 @@ describe("createProcessedMessage", () => {
       member: { nick: "Nickname" },
     };
 
-    expect(createProcessedMessage("# title", message, "Asia/Tokyo")).toEqual({
+    expect(
+      createProcessedMessage("# title", "Article Title", message, "Asia/Tokyo"),
+    ).toEqual({
       messageId: "123",
       timestamp: "2026-06-21T03:00:00.000Z",
       authorId: "author-id",
       authorName: "Nickname",
       markdown: "# title",
-      fileName: "20260621_120000_123",
+      fileName: "20260621_120000_Article Title",
     });
+  });
+
+  test("falls back to the message id when there is no usable title", () => {
+    const message: DiscordMessage = {
+      id: "123",
+      content: "content",
+      timestamp: "2026-06-21T03:00:00.000Z",
+    };
+
+    expect(
+      createProcessedMessage("# title", undefined, message, "Asia/Tokyo")
+        .fileName,
+    ).toBe("20260621_120000_123");
+    expect(
+      createProcessedMessage("# title", "   ", message, "Asia/Tokyo").fileName,
+    ).toBe("20260621_120000_123");
+  });
+
+  test("sanitizes forbidden characters and truncates long titles", () => {
+    const message: DiscordMessage = {
+      id: "123",
+      content: "content",
+      timestamp: "2026-06-21T03:00:00.000Z",
+    };
+
+    expect(
+      createProcessedMessage(
+        "# title",
+        "A: Title / With * Illegal? Chars",
+        message,
+        "Asia/Tokyo",
+      ).fileName,
+    ).toBe("20260621_120000_A- Title - With - Illegal- Chars");
+    expect(
+      createProcessedMessage("# title", "a".repeat(105), message, "Asia/Tokyo")
+        .fileName,
+    ).toBe(`20260621_120000_${"a".repeat(100)}`);
   });
 
   test("falls back through the Discord author fields", () => {
@@ -53,6 +92,7 @@ describe("createProcessedMessage", () => {
     expect(
       createProcessedMessage(
         "message",
+        undefined,
         {
           ...base,
           author: {
@@ -67,6 +107,7 @@ describe("createProcessedMessage", () => {
     expect(
       createProcessedMessage(
         "message",
+        undefined,
         {
           ...base,
           author: { id: "author-id", username: "username" },
@@ -77,6 +118,7 @@ describe("createProcessedMessage", () => {
     expect(
       createProcessedMessage(
         "message",
+        undefined,
         {
           ...base,
           author: { id: "author-id" },
@@ -89,6 +131,7 @@ describe("createProcessedMessage", () => {
   test("uses the requested local time zone for file names", () => {
     const processed = createProcessedMessage(
       "message",
+      undefined,
       {
         id: "123",
         content: "content",
@@ -104,6 +147,7 @@ describe("createProcessedMessage", () => {
     expect(() =>
       createProcessedMessage(
         "message",
+        undefined,
         {
           id: "123",
           content: "content",

@@ -74,10 +74,12 @@ function createMessage(
   id: string,
   timestamp: string,
   markdown = "hello",
+  title: string | undefined = undefined,
   timeZone = "Asia/Tokyo",
 ): ProcessedMessage {
   return createProcessedMessage(
     markdown,
+    title,
     {
       id,
       content: markdown,
@@ -89,14 +91,12 @@ function createMessage(
 }
 
 describe("saveProcessedMessages", () => {
-  test("saves a new clipping as an individual file", async () => {
+  test("saves a new clipping as an individual file named by article title", async () => {
     const { vault, files, folders } = createVaultMock();
 
-    const count = await saveProcessedMessages(
-      vault,
-      "DiscordClippings/general",
-      [createMessage("123", "2026-06-21T03:00:00.000Z", "# Example")],
-    );
+    const count = await saveProcessedMessages(vault, "DiscordClippings/general", [
+      createMessage("123", "2026-06-21T03:00:00.000Z", "# Example", "Example Article"),
+    ]);
 
     expect(count).toBe(1);
     expect(folders).toEqual(
@@ -104,8 +104,23 @@ describe("saveProcessedMessages", () => {
     );
     expect(files).toEqual(
       new Map([
-        ["DiscordClippings/general/20260621_120000_123.md", "# Example"],
+        [
+          "DiscordClippings/general/20260621_120000_Example Article.md",
+          "# Example",
+        ],
       ]),
+    );
+  });
+
+  test("falls back to the message id when there is no usable title", async () => {
+    const { vault, files } = createVaultMock();
+
+    await saveProcessedMessages(vault, "DiscordClippings/general", [
+      createMessage("123", "2026-06-21T03:00:00.000Z"),
+    ]);
+
+    expect(files.has("DiscordClippings/general/20260621_120000_123.md")).toBe(
+      true,
     );
   });
 
@@ -114,7 +129,7 @@ describe("saveProcessedMessages", () => {
     const timeZone = "America/New_York";
 
     const count = await saveProcessedMessages(vault, "DiscordClippings/general", [
-      createMessage("123", "2026-06-30T15:30:45.000Z", "hello", timeZone),
+      createMessage("123", "2026-06-30T15:30:45.000Z", "hello", undefined, timeZone),
     ]);
 
     expect(count).toBe(1);
@@ -123,28 +138,7 @@ describe("saveProcessedMessages", () => {
     );
   });
 
-  test("does not duplicate legacy JST clippings after changing time zone", async () => {
-    const { vault, files, folders } = createVaultMock();
-    folders.add("DiscordClippings");
-    folders.add("DiscordClippings/general");
-    files.set(
-      "DiscordClippings/general/20260701_003045_123.md",
-      "Existing clipping",
-    );
-    const timeZone = "America/New_York";
-
-    const count = await saveProcessedMessages(vault, "DiscordClippings/general", [
-      createMessage("123", "2026-06-30T15:30:45.000Z", "Replacement", timeZone),
-    ]);
-
-    expect(count).toBe(0);
-    expect(files.size).toBe(1);
-    expect(
-      files.has("DiscordClippings/general/20260630_113045_123.md"),
-    ).toBe(false);
-  });
-
-  test("does not save the same message id twice", async () => {
+  test("does not save the same message twice within one batch", async () => {
     const { vault, files } = createVaultMock();
     const message = createMessage("123", "2026-06-29T12:34:00.000Z");
 
@@ -155,6 +149,23 @@ describe("saveProcessedMessages", () => {
 
     expect(count).toBe(1);
     expect(files.size).toBe(1);
+  });
+
+  test("does not overwrite a file already saved at the same path", async () => {
+    const { vault, files } = createVaultMock();
+    files.set(
+      "DiscordClippings/general/20260629_213400_123.md",
+      "already saved",
+    );
+
+    const count = await saveProcessedMessages(vault, "DiscordClippings/general", [
+      createMessage("123", "2026-06-29T12:34:00.000Z", "replacement"),
+    ]);
+
+    expect(count).toBe(0);
+    expect(files.get("DiscordClippings/general/20260629_213400_123.md")).toBe(
+      "already saved",
+    );
   });
 
   test("rejects folder collisions at clipping file paths", async () => {
@@ -173,25 +184,6 @@ describe("saveProcessedMessages", () => {
     );
     expect(files.size).toBe(0);
     expect(createdPaths).toEqual([]);
-  });
-
-  test("ignores unrelated files and folders when detecting existing ids", async () => {
-    const { vault, files, folders } = createVaultMock();
-    folders.add("DiscordClippings");
-    folders.add("DiscordClippings/general");
-    // A folder that happens to look like an individual clipping file must not
-    // be mistaken for an existing id, and neither should a mismatched name.
-    folders.add("DiscordClippings/general/20260629_213400_999.md");
-    files.set("DiscordClippings/general/archive_123.md", "User note");
-
-    const count = await saveProcessedMessages(vault, "DiscordClippings/general", [
-      createMessage("123", "2026-06-29T12:34:00.000Z"),
-    ]);
-
-    expect(count).toBe(1);
-    expect(files.has("DiscordClippings/general/20260629_213400_123.md")).toBe(
-      true,
-    );
   });
 
   test("keeps two channel clippings separate", async () => {
@@ -216,6 +208,7 @@ describe("saveProcessedMessages", () => {
     expect(() =>
       createProcessedMessage(
         "hello",
+        undefined,
         {
           id: "123",
           content: "hello",

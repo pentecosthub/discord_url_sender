@@ -6,7 +6,7 @@ mod renderers;
 mod utils;
 
 use error::ConvertError;
-use frontmatters::{get_frontmatter_extractors, serialize_yaml_string};
+use frontmatters::{FrontMatter, get_frontmatter_extractors, serialize_yaml_string};
 
 /// Convert HTML to Markdown with front-matter extraction
 ///
@@ -88,9 +88,18 @@ pub fn convert(url: &str, html: &str, keys: &[&str]) -> Result<String, ConvertEr
     Ok(markdown)
 }
 
+/// Extract just the page title, without rendering the rest of the document.
+///
+/// Reuses the same extractor `convert` uses for the `title` front-matter key
+/// (`<title>`, `<meta name="title">`, OGP/Twitter title, then first heading).
+pub fn extract_title(url: &str, html: &str) -> Result<Option<String>, ConvertError> {
+    let dom = parser::parse_html(html)?;
+    Ok(frontmatters::title::EXTRACTOR.extract(url, &dom))
+}
+
 #[cfg(test)]
 mod tests {
-    use super::convert;
+    use super::{convert, extract_title};
 
     #[test]
     fn serializes_frontmatter_values_as_quoted_yaml_strings() {
@@ -120,5 +129,17 @@ mod tests {
             markdown,
             "---\nsource: \"https://example.com/first\\u000Asecond\\u000Dthird\\u0009fourth\"\n---\n\nContent"
         );
+    }
+
+    #[test]
+    fn extracts_title_without_rendering_the_body() {
+        let title = extract_title(
+            "https://example.com",
+            "<html><head><title>Page Title</title></head><body><p>Content</p></body></html>",
+        )
+        .unwrap();
+
+        assert_eq!(title, Some("Page Title".to_string()));
+        assert_eq!(extract_title("https://example.com", "<p>No title</p>").unwrap(), None);
     }
 }

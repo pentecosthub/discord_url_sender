@@ -19,10 +19,7 @@ import {
 import { fetchMessages, postNotification } from "./discordApi";
 import { migrateSettings, persistChannelCursor } from "./settings";
 import { DiscordMessageSenderSettingTab } from "./settingTab";
-import {
-  getExistingIndividualMessageIds,
-  saveProcessedMessages,
-} from "./vault";
+import { saveProcessedMessages } from "./vault";
 import { initWasmBridge, parseMessageWasm } from "./wasmBridge";
 import { DiscordApiError, getDiscordApiFailureNotice } from "./wasmCore";
 
@@ -136,17 +133,10 @@ export default class DiscordMessageSenderPlugin extends Plugin {
     settings: MessageSyncSettingsSnapshot,
   ): Promise<number> {
     const clippingDirectory = settings.clippingDirectoryName;
-    // Prevents another external fetch after the current message is confirmed
-    // to already have been clipped.
-    const existingClippingIds = getExistingIndividualMessageIds(
-      this.app.vault,
-      clippingDirectory,
-    );
 
     return processDiscordMessageBatch(
       messages,
-      (message) =>
-        parseMessageWasm(message, settings.timeZone, existingClippingIds),
+      (message) => parseMessageWasm(message, settings.timeZone),
       (processedMessages) =>
         saveProcessedMessages(
           this.app.vault,

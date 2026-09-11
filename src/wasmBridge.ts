@@ -1,6 +1,7 @@
 import { Notice, requestUrl } from "obsidian";
 import {
   convert_html as convertHtml,
+  extract_article_title as extractArticleTitle,
   processed_message as createProcessedMessage,
   type DiscordMessage,
   type InitOutput,
@@ -21,26 +22,27 @@ export async function initWasmBridge(): Promise<InitOutput> {
 export async function parseMessageWasm(
   message: DiscordMessage,
   timeZone: string,
-  existingClippingIds: ReadonlySet<string> = new Set(),
 ): Promise<ProcessedMessage | undefined> {
   await initWasmBridge();
 
   const url = messageUrl(message.content);
-  if (!url || existingClippingIds.has(message.id)) {
+  if (!url) {
     return undefined;
   }
 
   const html = await fetchUrlContent(url);
   let markdown: string;
+  let title: string | undefined;
   try {
     markdown = convertHtml(url, html);
+    title = extractArticleTitle(url, html);
   } catch (error) {
     throw new Error("Failed to convert URL content to Markdown.", {
       cause: error,
     });
   }
 
-  return createProcessedMessage(markdown, message, timeZone);
+  return createProcessedMessage(markdown, title, message, timeZone);
 }
 
 async function fetchUrlContent(value: string): Promise<string> {
