@@ -1,4 +1,4 @@
-# discord_url_sender
+# Discord Link Clipper for Obsidian
 
 A fork of [discord_message_sender](https://github.com/okawak/discord_message_sender) that only clips URLs. It is intended for a private, single-user Discord channel where every message is a link.
 
