@@ -1,5 +1,4 @@
 mod bindings;
-mod command;
 pub mod core;
 
 use html_to_markdown::convert;

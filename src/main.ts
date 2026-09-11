@@ -136,16 +136,12 @@ export default class DiscordMessageSenderPlugin extends Plugin {
     channel: DiscordChannelSettings,
     settings: MessageSyncSettingsSnapshot,
   ): Promise<number> {
-    const messageDirectory = createChannelDirectory(
-      settings.messageDirectoryName,
-      channel,
-    );
     const clippingDirectory = createChannelDirectory(
       settings.clippingDirectoryName,
       channel,
     );
-    // Clippings are always individual files, so their IDs can prevent another
-    // external fetch after the current message is confirmed to be a URL command.
+    // Prevents another external fetch after the current message is confirmed
+    // to already have been clipped.
     const existingClippingIds = getExistingIndividualMessageIds(
       this.app.vault,
       clippingDirectory,
@@ -154,19 +150,12 @@ export default class DiscordMessageSenderPlugin extends Plugin {
     return processDiscordMessageBatch(
       messages,
       (message) =>
-        parseMessageWasm(
-          message,
-          settings.messagePrefix,
-          settings.timeZone,
-          existingClippingIds,
-        ),
+        parseMessageWasm(message, settings.timeZone, existingClippingIds),
       (processedMessages) =>
         saveProcessedMessages(
           this.app.vault,
-          messageDirectory,
           clippingDirectory,
           processedMessages,
-          settings,
         ),
     );
   }

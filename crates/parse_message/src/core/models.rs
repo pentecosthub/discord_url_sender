@@ -17,27 +17,13 @@ pub struct NotificationTemplates {
     pub no_new: String,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Tsify)]
-#[serde(rename_all = "lowercase")]
-pub enum MessageStorageMode {
-    Individual,
-    Daily,
-    Weekly,
-    Monthly,
-}
-
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Tsify)]
 #[serde(rename_all = "camelCase")]
 pub struct DiscordPluginSettings {
     pub settings_version: u32,
-    pub message_directory_name: String,
     pub clipping_directory_name: String,
     pub bot_token: String,
     pub channels: Vec<DiscordChannelSettings>,
-    pub message_prefix: String,
-    pub message_storage_mode: MessageStorageMode,
-    pub show_author_names: bool,
-    pub show_message_time: bool,
     pub enable_auto_sync_on_startup: bool,
     pub send_sync_notifications: bool,
     pub notification_templates: NotificationTemplates,
@@ -53,12 +39,7 @@ pub struct SettingsMigrationResult {
 #[serde(rename_all = "camelCase")]
 pub struct MessageSyncSettingsSnapshot {
     pub bot_token: String,
-    pub message_directory_name: String,
     pub clipping_directory_name: String,
-    pub message_prefix: String,
-    pub message_storage_mode: MessageStorageMode,
-    pub show_author_names: bool,
-    pub show_message_time: bool,
     pub send_sync_notifications: bool,
     pub notification_templates: NotificationTemplates,
     pub time_zone: String,
@@ -100,14 +81,7 @@ pub struct ProcessedMessage {
     pub author_id: String,
     pub author_name: String,
     pub markdown: String,
-    pub is_clipping: bool,
     pub file_name: String,
-}
-#[derive(Debug, Clone, Serialize, Deserialize, Tsify)]
-#[serde(tag = "kind", rename_all = "lowercase")]
-pub enum MessageInstruction {
-    Message { markdown: String },
-    Url { url: String },
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Tsify)]

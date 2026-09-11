@@ -2,67 +2,20 @@ import { describe, expect, test } from "bun:test";
 import {
   processed_message as createProcessedMessage,
   type DiscordMessage,
-  message_instruction,
+  message_url as messageUrl,
 } from "../pkg/parse_message.js";
-import { isSavedClippingInstruction } from "../src/messageParsing";
 
-describe("Rust message instructions", () => {
-  test("returns a typed regular-message instruction", () => {
-    expect(message_instruction("# title", "!")).toEqual({
-      kind: "message",
-      markdown: "# title",
-    });
-  });
-  test("returns a typed URL instruction", () => {
-    expect(message_instruction("!url https://example.com", "!")).toEqual({
-      kind: "url",
-      url: "https://example.com",
-    });
-  });
-  test("rejects a URL command without an argument", () => {
-    expect(() => message_instruction("!url", "!")).toThrow();
-  });
-  test("rejects unknown commands", () => {
-    expect(() => message_instruction("!unknown", "!")).toThrow();
-  });
-});
-
-describe("isSavedClippingInstruction", () => {
-  const existingIds = new Set(["123"]);
-
-  test("skips only current URL commands with an existing clipping ID", () => {
-    expect(
-      isSavedClippingInstruction(
-        "123",
-        { kind: "url", url: "https://example.com" },
-        existingIds,
-      ),
-    ).toBe(true);
-    expect(
-      isSavedClippingInstruction(
-        "456",
-        { kind: "url", url: "https://example.com" },
-        existingIds,
-      ),
-    ).toBe(false);
-  });
-
-  test("does not skip regular content that previously used the same ID", () => {
-    expect(
-      isSavedClippingInstruction(
-        "123",
-        { kind: "message", markdown: "regular message" },
-        existingIds,
-      ),
-    ).toBe(false);
-  });
-
-  test("does not skip a former URL command after the prefix changes", () => {
-    const instruction = message_instruction("!url https://example.com", "?");
-
-    expect(isSavedClippingInstruction("123", instruction, existingIds)).toBe(
-      false,
+describe("messageUrl", () => {
+  test("finds a URL anywhere in the message", () => {
+    expect(messageUrl("https://example.com")).toBe("https://example.com");
+    expect(messageUrl("check this out https://example.com/path?q=1 thanks")).toBe(
+      "https://example.com/path?q=1",
     );
+  });
+
+  test("returns undefined when the message has no URL", () => {
+    expect(messageUrl("hello world")).toBeUndefined();
+    expect(messageUrl("")).toBeUndefined();
   });
 });
 
@@ -80,15 +33,12 @@ describe("createProcessedMessage", () => {
       member: { nick: "Nickname" },
     };
 
-    expect(
-      createProcessedMessage("# title", true, message, "Asia/Tokyo"),
-    ).toEqual({
+    expect(createProcessedMessage("# title", message, "Asia/Tokyo")).toEqual({
       messageId: "123",
       timestamp: "2026-06-21T03:00:00.000Z",
       authorId: "author-id",
       authorName: "Nickname",
       markdown: "# title",
-      isClipping: true,
       fileName: "20260621_120000_123",
     });
   });
@@ -103,7 +53,6 @@ describe("createProcessedMessage", () => {
     expect(
       createProcessedMessage(
         "message",
-        false,
         {
           ...base,
           author: {
@@ -118,7 +67,6 @@ describe("createProcessedMessage", () => {
     expect(
       createProcessedMessage(
         "message",
-        false,
         {
           ...base,
           author: { id: "author-id", username: "username" },
@@ -129,7 +77,6 @@ describe("createProcessedMessage", () => {
     expect(
       createProcessedMessage(
         "message",
-        false,
         {
           ...base,
           author: { id: "author-id" },
@@ -142,7 +89,6 @@ describe("createProcessedMessage", () => {
   test("uses the requested local time zone for file names", () => {
     const processed = createProcessedMessage(
       "message",
-      false,
       {
         id: "123",
         content: "content",
@@ -158,7 +104,6 @@ describe("createProcessedMessage", () => {
     expect(() =>
       createProcessedMessage(
         "message",
-        false,
         {
           id: "123",
           content: "content",

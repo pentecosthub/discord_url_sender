@@ -1,17 +1,16 @@
-English | [日本語](.github/README.ja.md) | [简体中文](.github/README.zh-CN.md)
+# discord_url_sender
 
-# discord_message_sender
+A fork of [discord_message_sender](https://github.com/okawak/discord_message_sender) that only clips URLs. It is intended for a private, single-user Discord channel where every message is a link.
 
 ## Overview
 
-This is a Obsidian plugin that allows you to take notes in Discord and automatically sync them to Obsidian.
+This is an Obsidian plugin that clips web pages you post in a Discord channel and automatically syncs them into Obsidian as Markdown.
 
 **Key Features:**
 
-- Automatically converts Discord messages into Obsidian Markdown files and saves them
-- Automatically clips web page contents from URLs and saves them as Markdown by using `!url` command
+- Automatically clips the web page at any URL posted in the channel and saves it as Markdown — no command prefix needed
+- Silently ignores any message that doesn't contain a URL; nothing is saved and no notice is shown
 - Syncs multiple Discord channels and stores each channel in its own subfolder
-- Stores regular messages as individual, daily, weekly, or monthly Markdown files
 - Lets you disable or customize the Discord notification messages sent after sync
 - Can be triggered on Obsidian desktop startup or via the command palette
 
@@ -24,8 +23,8 @@ This is a Obsidian plugin that allows you to take notes in Discord and automatic
 
 2. **Message Processing**
     - When you launch Obsidian, the plugin fetches messages from Discord via the API
-    - Regular messages → Saved using the selected storage mode under channel-specific folders
-    - Special commands (messages starting with the prefix) → Processed with custom handlers
+    - Any message containing a URL → the linked page is fetched, converted to Markdown, and saved
+    - Any message without a URL → ignored entirely
     - After processing, a completion notification is optionally sent to Discord
 
 ## ⚠️ Notes
@@ -68,74 +67,20 @@ Please enter the following information in the plugin settings:
 
 - **Bot Token**
 - **Channels**: Add each Discord channel ID. A channel name is optional and is used as the Obsidian subfolder name. Channel names must resolve to unique folder names.
-- **Message storage**: Choose one file per message, or daily, weekly, or monthly logs.
-- **Show author names**: Include the Discord author in daily, weekly, and monthly logs.
-- **Show message time**: Include the local message time in daily, weekly, and monthly logs.
 - **Send sync notifications**: Disable this to prevent the plugin from posting completion messages to Discord.
 - **Notification templates**: Optional templates for the Discord messages sent after sync. Available variables: `{count}`, `{channelName}`, `{channelId}`
 
-By default, messages are saved under `DiscordLogs/<channel name or ID>/`, and URL clippings are saved under `DiscordClippings/<channel name or ID>/`. Duplicate folder names are rejected in settings, and sync also stops if manually edited settings contain a duplicate.
+By default, clippings are saved under `DiscordClippings/<channel name or ID>/`. Duplicate folder names are rejected in settings, and sync also stops if manually edited settings contain a duplicate.
 
 Channel names cannot contain `\ / : * ? " < > | # ^ [ ]`. The names `.` and `..` are also not allowed. Invalid names are not saved.
 
-## Message Storage
+## URL Clipping
 
-Regular messages are stored under `DiscordLogs/<channel name or ID>/`. Choose one of the following modes:
-
-- **One file per message**: `YYYYMMDD_HHMMSS_<message ID>.md`
-- **Daily log**: `YYYY-MM-DD.md`
-- **Weekly log**: `<ISO week-year>-W<week>.md`; weeks start on Monday
-- **Monthly log**: `YYYY-MM.md`
-
-Dates, times, and individual file names use the computer's local time zone when synchronization starts. Daily logs use the date as the level-one heading. Weekly and monthly logs use the period as the level-one heading and each date as a level-two heading. Messages do not create their own headings.
-
-With author names and message times disabled, an aggregated entry is stored like this:
-
-```markdown
-<!-- discord-message-id: 1520291078606028900 -->
-yes
-```
-
-With both options enabled, the same entry is stored like this:
-
-```markdown
-<!-- discord-message-id: 1520291078606028900 -->
-**Alice** · 21:34
-
-yes
-```
-
-The plugin also writes managed-log and date markers as HTML comments. These markers are hidden in Obsidian Reading view and prevent duplicate messages when a sync is retried or the storage mode changes. Do not remove or edit them.
-
-Existing settings are automatically migrated to **One file per message**, preserving channels and synchronization cursors. Changing the storage mode only affects new messages. Existing files are not converted, moved, or renamed, so files from different modes can coexist safely.
-
-URL clippings always remain individual files under `DiscordClippings/<channel name or ID>/`.
+Every synced message is scanned for a URL (anything starting with `http://` or `https://`). If one is found, the linked page is fetched and saved as an individual Markdown file: `DiscordClippings/<channel name or ID>/YYYYMMDD_HHMMSS_<message ID>.md`, using the computer's local time zone when synchronization starts. If a message has no URL, it is skipped entirely — nothing is written and no notice is shown.
 
 ### Discord API behavior
 
-The plugin uses Discord API v10 and requests up to 100 messages at a time. The first synchronization imports the latest 100 messages. Later synchronizations request only pages needed to reach the saved per-channel cursor, so daily, weekly, and monthly logs do not cause the entire period to be downloaded again. Requests are paginated when more than 100 new messages exist and observe Discord rate-limit responses.
-
-## Command List
-
-Messages starting with the configured prefix (default: `!`) are treated as special commands.
-
-### `!url` - Web Page Clipping (under development)
-
-**Example:**
-
-```
-!url https://www.example.com
-```
-
-**Behavior:**
-
-- Fetches the contents of the specified URL
-- Saves it as a Markdown file
-- Save location: Channel-specific directory under the clipping directory (default: **DiscordClippings**)
-
-### Roadmap
-
-Additional useful commands will be added in future releases.
+The plugin uses Discord API v10 and requests up to 100 messages at a time. The first synchronization imports the latest 100 messages. Later synchronizations request only the pages needed to reach the saved per-channel cursor. Requests are paginated when more than 100 new messages exist and observe Discord rate-limit responses.
 
 ## Development
 

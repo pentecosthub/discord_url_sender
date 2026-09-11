@@ -18,7 +18,6 @@ function processed(source: DiscordMessage): ProcessedMessage {
     authorId: source.author?.id ?? "",
     authorName: source.author?.id ?? "Unknown",
     markdown: source.content,
-    isClipping: false,
     fileName: `20260701_090000_${source.id}`,
   };
 }

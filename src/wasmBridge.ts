@@ -4,11 +4,9 @@ import {
   processed_message as createProcessedMessage,
   type DiscordMessage,
   type InitOutput,
-  type MessageInstruction,
   type ProcessedMessage,
-  message_instruction as parseMessage,
+  message_url as messageUrl,
 } from "../pkg/parse_message.js";
-import { isSavedClippingInstruction } from "./messageParsing";
 import { initWasmCore } from "./wasmCore";
 
 export async function initWasmBridge(): Promise<InitOutput> {
@@ -22,42 +20,27 @@ export async function initWasmBridge(): Promise<InitOutput> {
 
 export async function parseMessageWasm(
   message: DiscordMessage,
-  prefix: string,
   timeZone: string,
   existingClippingIds: ReadonlySet<string> = new Set(),
 ): Promise<ProcessedMessage | undefined> {
   await initWasmBridge();
 
-  let instruction: MessageInstruction;
-  try {
-    instruction = parseMessage(message.content, prefix);
-  } catch (error) {
-    throw new Error("Failed to parse Discord message.", { cause: error });
-  }
-
-  if (instruction.kind === "message") {
-    return createProcessedMessage(
-      instruction.markdown,
-      false,
-      message,
-      timeZone,
-    );
-  }
-
-  if (isSavedClippingInstruction(message.id, instruction, existingClippingIds))
+  const url = messageUrl(message.content);
+  if (!url || existingClippingIds.has(message.id)) {
     return undefined;
+  }
 
-  const html = await fetchUrlContent(instruction.url);
+  const html = await fetchUrlContent(url);
   let markdown: string;
   try {
-    markdown = convertHtml(instruction.url, html);
+    markdown = convertHtml(url, html);
   } catch (error) {
     throw new Error("Failed to convert URL content to Markdown.", {
       cause: error,
     });
   }
 
-  return createProcessedMessage(markdown, true, message, timeZone);
+  return createProcessedMessage(markdown, message, timeZone);
 }
 
 async function fetchUrlContent(value: string): Promise<string> {

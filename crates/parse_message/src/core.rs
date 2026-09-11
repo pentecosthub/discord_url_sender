@@ -2,7 +2,6 @@
 pub mod channels;
 pub mod dates;
 pub mod discord;
-pub mod logs;
 pub mod messages;
 pub mod models;
 pub mod settings;

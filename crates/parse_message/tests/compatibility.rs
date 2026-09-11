@@ -1,6 +1,6 @@
 //! Regression fixtures captured from the previous TypeScript implementation.
 //! Keep cross-module compatibility checks together; unit tests live beside their implementation.
-use parse_message::core::{channels, dates, logs, settings};
+use parse_message::core::{channels, dates, settings};
 use serde_json::Value;
 
 fn fixtures() -> Value {
@@ -40,23 +40,6 @@ fn channel_paths_match_previous_typescript_unicode_and_punctuation() {
         assert_eq!(
             channels::duplicate_path(&decode::<Vec<_>>(&case["channels"])).as_deref(),
             case["expected"].as_str()
-        );
-    }
-}
-
-#[test]
-fn logs_match_previous_typescript_byte_for_byte() {
-    for case in fixtures()["logs"].as_array().unwrap() {
-        let result = logs::merge(
-            case["existing"].as_str().unwrap(),
-            &decode::<Vec<_>>(&case["entries"]),
-            &decode(&case["options"]),
-        );
-        assert_eq!(
-            serde_json::to_value(result).unwrap(),
-            case["expected"],
-            "options: {}",
-            case["options"]
         );
     }
 }

@@ -12,7 +12,6 @@ license-file.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-thiserror.workspace = true
 regex-lite.workspace = true
 html_to_markdown = { path = "../html_to_markdown" }
 js-sys.workspace = true

@@ -1,30 +1,16 @@
 import initWasm, {
   convert_html as convertHtml,
-  message_instruction as parseMessage,
+  message_url as parseMessageUrl,
 } from "../pkg/parse_message.js";
 
 const wasm = await initWasm();
 
-const message = parseMessage("hello", "!");
-if (message.kind !== "message" || message.markdown !== "hello") {
-  throw new Error("WASM message processing smoke test failed.");
+if (parseMessageUrl("hello") !== undefined) {
+  throw new Error("WASM message-without-URL smoke test failed.");
 }
 
-const url = parseMessage("!url https://example.com", "!");
-if (url.kind !== "url" || url.url !== "https://example.com") {
-  throw new Error("WASM URL command smoke test failed.");
-}
-
-for (const input of ["!url", "!unknown"]) {
-  let failed = false;
-  try {
-    parseMessage(input, "!");
-  } catch {
-    failed = true;
-  }
-  if (!failed) {
-    throw new Error(`WASM command error did not propagate for "${input}".`);
-  }
+if (parseMessageUrl("check https://example.com out") !== "https://example.com") {
+  throw new Error("WASM URL extraction smoke test failed.");
 }
 
 const markdown = convertHtml(

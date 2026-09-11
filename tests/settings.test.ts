@@ -25,12 +25,10 @@ const CURRENT_SETTINGS_SCHEMA_VERSION = default_settings().settingsVersion;
 describe("normalizeSettings", () => {
   test("migrates legacy channel fields into channels", () => {
     const settings = normalizeSettings({
-      messageDirectoryName: "Logs",
       clippingDirectoryName: "Clips",
       botToken: "token",
       channelId: " 1234567890 ",
       lastProcessedMessageId: " 9876543210 ",
-      messagePrefix: "!",
       enableAutoSyncOnStartup: false,
     });
 
@@ -46,9 +44,6 @@ describe("normalizeSettings", () => {
     expect(Object.hasOwn(settings, "lastProcessedMessageId")).toBe(false);
     expect(settings.enableAutoSyncOnStartup).toBe(false);
     expect(settings.sendSyncNotifications).toBe(true);
-    expect(settings.messageStorageMode).toBe("individual");
-    expect(settings.showAuthorNames).toBe(false);
-    expect(settings.showMessageTime).toBe(false);
   });
 
   test("keeps valid channels and drops blank channel ids", () => {
@@ -107,27 +102,6 @@ describe("normalizeSettings", () => {
     expect(
       normalizeSettings({ sendSyncNotifications: false }).sendSyncNotifications,
     ).toBe(false);
-  });
-
-  test("keeps supported storage modes and rejects unknown values", () => {
-    for (const mode of ["daily", "weekly", "monthly"] as const) {
-      expect(
-        normalizeSettings({ messageStorageMode: mode }).messageStorageMode,
-      ).toBe(mode);
-    }
-    expect(
-      normalizeSettings({ messageStorageMode: "yearly" }).messageStorageMode,
-    ).toBe("individual");
-  });
-
-  test("keeps aggregated log display settings", () => {
-    const settings = normalizeSettings({
-      showAuthorNames: true,
-      showMessageTime: true,
-    });
-
-    expect(settings.showAuthorNames).toBe(true);
-    expect(settings.showMessageTime).toBe(true);
   });
 });
 
@@ -245,16 +219,13 @@ describe("migrateSettings", () => {
         lastProcessedMessageId: "456",
       },
     ]);
-    expect(migration.settings.messageStorageMode).toBe("individual");
   });
 
   test("rewrites v0.2.8 settings into the current schema", () => {
     const migration = migrateSettings({
-      messageDirectoryName: "DiscordLogs",
       clippingDirectoryName: "DiscordClippings",
       botToken: "token",
       channelId: "123",
-      messagePrefix: "!",
       enableAutoSyncOnStartup: true,
       lastProcessedMessageId: "456",
     });
@@ -311,25 +282,16 @@ describe("createMessageSyncSettingsSnapshot", () => {
   test("keeps one sync isolated from later setting changes", () => {
     const settings = normalizeSettings({
       botToken: "token",
-      messageDirectoryName: "Logs",
       clippingDirectoryName: "Clips",
-      messagePrefix: "!",
-      messageStorageMode: "weekly",
-      showAuthorNames: true,
-      showMessageTime: true,
       sendSyncNotifications: true,
       notificationTemplates: { saved: "saved", noNew: "none" },
     });
     const snapshot = createMessageSyncSettingsSnapshot(settings, "Asia/Tokyo");
 
-    settings.messageStorageMode = "monthly";
-    settings.showAuthorNames = false;
     settings.notificationTemplates.saved = "changed";
 
     expect(snapshot).toMatchObject({
-      messageStorageMode: "weekly",
-      showAuthorNames: true,
-      showMessageTime: true,
+      clippingDirectoryName: "Clips",
       timeZone: "Asia/Tokyo",
       notificationTemplates: { saved: "saved", noNew: "none" },
     });

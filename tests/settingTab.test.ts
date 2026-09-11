@@ -96,13 +96,13 @@ describe("Obsidian 1.13 settings", () => {
   test("declarative controls persist nested templates and normalize empty input", async () => {
     const { tab, plugin } = createTab();
     await tab.setControlValue("savedNotificationTemplate", "  Saved {count}  ");
-    await tab.setControlValue("messageDirectoryName", "   ");
+    await tab.setControlValue("clippingDirectoryName", "   ");
     await tab.setControlValue("sendSyncNotifications", false);
     expect(plugin.settings.notificationTemplates.saved).toBe("Saved {count}");
     expect(tab.getControlValue("savedNotificationTemplate")).toBe(
       "Saved {count}",
     );
-    expect(plugin.settings.messageDirectoryName).toBe("DiscordLogs");
+    expect(plugin.settings.clippingDirectoryName).toBe("DiscordClippings");
     expect(plugin.settings.sendSyncNotifications).toBe(false);
     expect(plugin.saveSettings).toHaveBeenCalledTimes(3);
   });
@@ -110,10 +110,7 @@ describe("Obsidian 1.13 settings", () => {
   test("invalid control values are rejected without persisting", async () => {
     const { tab, plugin } = createTab();
     await expect(
-      tab.setControlValue("messageStorageMode", "invalid"),
-    ).rejects.toThrow(TypeError);
-    await expect(
-      tab.setControlValue("showAuthorNames", "true"),
+      tab.setControlValue("enableAutoSyncOnStartup", "true"),
     ).rejects.toThrow(TypeError);
     expect(plugin.saveSettings).not.toHaveBeenCalled();
   });

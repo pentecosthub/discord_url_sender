@@ -1,7 +1,5 @@
 //! Typed JS boundary only. All decisions and transformations live in core/.
-use crate::core::{
-    self, channels, dates, discord, logs, messages, models::*, settings, storage, sync,
-};
+use crate::core::{self, channels, dates, discord, messages, models::*, settings, storage, sync};
 use serde_json::Value;
 use std::collections::BTreeMap;
 use tsify::{Ts, Tsify};
@@ -106,75 +104,32 @@ pub fn possible_local_dates(timestamp: &str) -> Result<Ts<LocalDateTimeList>, Js
     Ok(LocalDateTimeList(dates::possible_dates(timestamp).map_err(error)?).into_ts()?)
 }
 #[wasm_bindgen]
-pub fn message_instruction(input: &str, prefix: &str) -> Result<Ts<MessageInstruction>, JsError> {
-    Ok(messages::instruction(input, prefix)
-        .map_err(error)?
-        .into_ts()?)
+pub fn message_url(input: &str) -> Option<String> {
+    messages::extract_url(input)
 }
 #[wasm_bindgen]
 pub fn processed_message(
     markdown: String,
-    clipping: bool,
     message: Ts<DiscordMessage>,
     zone: &str,
 ) -> Result<Ts<ProcessedMessage>, JsError> {
-    Ok(
-        messages::processed(markdown, clipping, message.to_rust()?, zone)
-            .map_err(error)?
-            .into_ts()?,
-    )
+    Ok(messages::processed(markdown, message.to_rust()?, zone)
+        .map_err(error)?
+        .into_ts()?)
 }
 #[wasm_bindgen]
 pub fn should_process_message(message: Ts<DiscordMessage>) -> Result<bool, JsError> {
     Ok(sync::should_process(&message.to_rust()?))
 }
 #[wasm_bindgen]
-pub fn aggregated_log_marker(mode: Ts<logs::AggregatedStorageMode>) -> Result<String, JsError> {
-    Ok(logs::marker(mode.to_rust()?))
-}
-#[wasm_bindgen]
-pub fn create_aggregated_log(
-    mode: Ts<logs::AggregatedStorageMode>,
-    period: &str,
-) -> Result<String, JsError> {
-    Ok(logs::create(mode.to_rust()?, period))
-}
-#[wasm_bindgen]
-pub fn has_aggregated_log_marker(
-    content: &str,
-    mode: Ts<logs::AggregatedStorageMode>,
-) -> Result<bool, JsError> {
-    Ok(logs::has_marker(content, mode.to_rust()?))
-}
-#[wasm_bindgen]
-pub fn is_managed_log(content: &str) -> bool {
-    logs::is_managed(content)
-}
-#[wasm_bindgen]
-pub fn aggregated_message_ids(content: &str) -> Vec<String> {
-    logs::message_ids(content)
-}
-#[wasm_bindgen]
-pub fn merge_aggregated_log(
-    content: &str,
-    entries: Ts<logs::LogEntries>,
-    options: Ts<logs::AggregatedLogOptions>,
-) -> Result<Ts<logs::AggregatedLogMergeResult>, JsError> {
-    Ok(logs::merge(content, &entries.to_rust()?.0, &options.to_rust()?).into_ts()?)
-}
-#[wasm_bindgen]
 pub fn individual_message_id(name: &str) -> Option<String> {
     storage::individual_id(name)
-}
-#[wasm_bindgen]
-pub fn storage_candidate_paths(input: Ts<storage::StorageInput>) -> Result<Vec<String>, JsError> {
-    storage::candidate_paths(&input.to_rust()?).map_err(error)
 }
 #[wasm_bindgen]
 pub fn plan_message_storage(
     input: Ts<storage::StorageInput>,
 ) -> Result<Ts<storage::StoragePlan>, JsError> {
-    Ok(storage::plan(input.to_rust()?).map_err(error)?.into_ts()?)
+    Ok(storage::plan(input.to_rust()?).into_ts()?)
 }
 #[wasm_bindgen]
 pub fn select_message_page(

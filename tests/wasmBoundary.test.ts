@@ -6,7 +6,7 @@ import {
   duplicate_channel_path,
   type LocalDateTime,
   local_date_time,
-  message_instruction,
+  message_url,
   normalize_settings,
   processed_message,
 } from "../pkg/parse_message.js";
@@ -44,15 +44,11 @@ describe("Rust/TypeScript boundary", () => {
     expect(() =>
       processed_message(
         "hello",
-        false,
         { id: 123 } as unknown as DiscordMessage,
         "UTC",
       ),
     ).toThrow();
-    expect(message_instruction("hello", "!")).toEqual({
-      kind: "message",
-      markdown: "hello",
-    });
+    expect(message_url("hello")).toBeUndefined();
   });
   test("repeated conversion errors release temporary WASM allocations", async () => {
     const wasm = await initWasmCore();
@@ -63,7 +59,7 @@ describe("Rust/TypeScript boundary", () => {
     } as unknown as DiscordMessage;
     const fail = () => {
       try {
-        processed_message("hello", false, invalid, "UTC");
+        processed_message("hello", invalid, "UTC");
       } catch {
         return;
       }

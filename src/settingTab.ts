@@ -10,7 +10,6 @@ import {
 import {
   type DiscordChannelSettings,
   default_settings as getDefaultSettings,
-  type MessageStorageMode,
   normalize_setting_control,
   read_setting_control,
   rename_channel,
@@ -20,23 +19,11 @@ import type DiscordMessageSenderPlugin from "./main";
 import { updateChannelId } from "./settings";
 
 type SettingKey =
-  | "messageDirectoryName"
   | "clippingDirectoryName"
-  | "messagePrefix"
-  | "messageStorageMode"
-  | "showAuthorNames"
-  | "showMessageTime"
   | "enableAutoSyncOnStartup"
   | "sendSyncNotifications"
   | "savedNotificationTemplate"
   | "noNewNotificationTemplate";
-
-const STORAGE_OPTIONS: Record<MessageStorageMode, string> = {
-  individual: "One file per message",
-  daily: "Daily log",
-  weekly: "Weekly log",
-  monthly: "Monthly log",
-};
 
 export class DiscordMessageSenderSettingTab extends PluginSettingTab {
   plugin: DiscordMessageSenderPlugin;
@@ -53,16 +40,6 @@ export class DiscordMessageSenderSettingTab extends PluginSettingTab {
         type: "group",
         heading: "Directory",
         items: [
-          {
-            name: "Messages directory",
-            desc: "Directory where regular Discord messages will be saved",
-            control: {
-              type: "text",
-              key: "messageDirectoryName",
-              defaultValue: defaults.messageDirectoryName,
-              placeholder: "DiscordLogs",
-            },
-          },
           {
             name: "Clippings directory",
             desc: "Directory where URL clippings will be saved",
@@ -83,16 +60,6 @@ export class DiscordMessageSenderSettingTab extends PluginSettingTab {
             name: "Bot token",
             desc: "Your Discord bot token",
             render: (setting) => this.renderBotToken(setting),
-          },
-          {
-            name: "Message prefix",
-            desc: "Prefix for message processing",
-            control: {
-              type: "text",
-              key: "messagePrefix",
-              defaultValue: defaults.messagePrefix,
-              placeholder: "!",
-            },
           },
         ],
       },
@@ -150,26 +117,6 @@ export class DiscordMessageSenderSettingTab extends PluginSettingTab {
         type: "group",
         heading: "Behavior",
         items: [
-          {
-            name: "Message storage",
-            desc: "Choose how regular Discord messages are grouped",
-            control: {
-              type: "dropdown",
-              key: "messageStorageMode",
-              defaultValue: defaults.messageStorageMode,
-              options: STORAGE_OPTIONS,
-            },
-          },
-          {
-            name: "Show author names",
-            desc: "Include the Discord author in aggregated logs",
-            control: { type: "toggle", key: "showAuthorNames" },
-          },
-          {
-            name: "Show message time",
-            desc: "Include the local message time in aggregated logs",
-            control: { type: "toggle", key: "showMessageTime" },
-          },
           {
             name: "Auto-sync on startup",
             desc: "Automatically sync messages when Obsidian starts",
