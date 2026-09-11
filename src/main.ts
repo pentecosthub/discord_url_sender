@@ -1,6 +1,5 @@
 import { Notice, Plugin } from "obsidian";
 import {
-  channel_directory as createChannelDirectory,
   type DiscordChannelSettings,
   type DiscordMessage,
   type DiscordPluginSettings,
@@ -133,13 +132,10 @@ export default class DiscordMessageSenderPlugin extends Plugin {
 
   private async processDiscordMessages(
     messages: readonly DiscordMessage[],
-    channel: DiscordChannelSettings,
+    _channel: DiscordChannelSettings,
     settings: MessageSyncSettingsSnapshot,
   ): Promise<number> {
-    const clippingDirectory = createChannelDirectory(
-      settings.clippingDirectoryName,
-      channel,
-    );
+    const clippingDirectory = settings.clippingDirectoryName;
     // Prevents another external fetch after the current message is confirmed
     // to already have been clipped.
     const existingClippingIds = getExistingIndividualMessageIds(
