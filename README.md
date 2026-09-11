@@ -76,7 +76,7 @@ Channel names cannot contain `\ / : * ? " < > | # ^ [ ]`. The names `.` and `..`
 
 ## URL Clipping
 
-Every synced message is scanned for a URL (anything starting with `http://` or `https://`). If one is found, the linked page is fetched and saved as an individual Markdown file: `DiscordClippings/YYYYMMDD_HHMMSS_<message ID>.md`, using the computer's local time zone when synchronization starts. If a message has no URL, it is skipped entirely — nothing is written and no notice is shown.
+Every synced message is scanned for a URL (anything starting with `http://` or `https://`). If one is found, the linked page is fetched and saved as an individual Markdown file: `DiscordClippings/YYYYMMDD_HHMMSS_<article title>.md`, using the computer's local time zone when synchronization starts. The title comes from the page's `<title>`, meta/OGP/Twitter title tags, or its first heading; if none of those are found, the Discord message ID is used instead so the file still gets a valid name. If a message has no URL, it is skipped entirely — nothing is written and no notice is shown.
 
 ### Discord API behavior
 
